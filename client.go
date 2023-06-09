@@ -2,6 +2,7 @@ package aoscxgo
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -82,4 +83,17 @@ func logout(http_transport *http.Transport, cookie *http.Cookie, url string) *ht
 	fmt.Println("Logout Successful")
 
 	return res
+}
+
+// Logout calls the logout endpoint to clear the session.
+func (c *Client) Logout() error {
+	if c == nil {
+		return errors.New("nil value to Logout")
+	}
+	url := fmt.Sprintf("https://%s/rest/%s/logout", c.Hostname, c.Version)
+	resp := logout(c.Transport, c.Cookie, url)
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(resp.Status)
+	}
+	return nil
 }
