@@ -1,9 +1,7 @@
 package aoscxgo
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // Chassis represents the result from the chassis subsystem on v10.09.
@@ -109,14 +107,5 @@ type Chassis struct {
 // GetChassis returns the chassis information by the given id. The first chassis has id 1.
 func (c *Client) GetChassis(id int) (Chassis, error) {
 	url := fmt.Sprintf("https://%s/rest/%s/system/subsystems/chassis,%v", c.Hostname, c.Version, id)
-	var result Chassis
-	req, _ := http.NewRequest(http.MethodGet, url, nil)
-	req.Header.Set("accept", "*/*")
-	req.Close = false
-	req.AddCookie(c.Cookie)
-	res, err := c.Transport.RoundTrip(req)
-	if err == nil {
-		err = json.NewDecoder(res.Body).Decode(&result)
-	}
-	return result, err
+	return getStruct[Chassis](c.Transport, c.Cookie, url)
 }

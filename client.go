@@ -51,17 +51,15 @@ func Connect(c *Client) (*Client, error) {
 // login performs POST to create a cookie for authentication to the given IP with the provided credentials.
 func login(http_transport *http.Transport, ip string, rest_version string, username string, password string) (*http.Cookie, error) {
 	url := fmt.Sprintf("https://%s/rest/%s/login?username=%s&password=%s", ip, rest_version, username, password)
-	req, _ := http.NewRequest("POST", url, nil)
+	req, _ := http.NewRequest(http.MethodPost, url, nil)
 	req.Header.Set("accept", "*/*")
 	req.Close = false
 
 	res, err := http_transport.RoundTrip(req)
-	if res.Status != "200 OK" {
-		log.Fatalf("Got error while connecting to switch %s Error %s", res.Status, err)
+	if res.StatusCode != http.StatusOK {
+		log.Printf("Got error while connecting to switch %s Error %s\n", res.Status, err)
 		return nil, err
 	}
-
-	fmt.Println("Login Successful")
 	cookie := res.Cookies()[0]
 
 	return cookie, err
@@ -69,19 +67,16 @@ func login(http_transport *http.Transport, ip string, rest_version string, usern
 
 // logout performs POST to logout using a cookie from the given URL.
 func logout(http_transport *http.Transport, cookie *http.Cookie, url string) *http.Response {
-	req, _ := http.NewRequest("POST", url, nil)
+	req, _ := http.NewRequest(http.MethodPost, url, nil)
 	req.Header.Set("accept", "*/*")
 	req.Close = false
 
 	req.AddCookie(cookie)
 	res, err := http_transport.RoundTrip(req)
 	//Handle Error
-	if res.Status != "200 OK" {
-		log.Fatalf("Got error while logging out of switch %s Error %s", res.Status, err)
+	if res.StatusCode != http.StatusOK {
+		log.Printf("Got error while logging out of switch %s Error %s\n", res.Status, err)
 	}
-
-	fmt.Println("Logout Successful")
-
 	return res
 }
 

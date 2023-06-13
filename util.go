@@ -3,26 +3,27 @@ package aoscxgo
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 )
 
-// A custom error struct
+// RequestError is a custom error struct
 type RequestError struct {
 	StatusCode string
 
 	Err error
 }
 
-// A custom error string
+// Error returns a custom error string
 func (r *RequestError) Error() string {
-	return fmt.Sprintf("status %d: err %v", r.StatusCode, r.Err)
+	return fmt.Sprintf("status %s: err %v", r.StatusCode, r.Err)
 }
 
 // delete performs DELETE to the given URL and returns the response.
 func delete(http_transport *http.Transport, cookie *http.Cookie, url string) *http.Response {
-	req, _ := http.NewRequest("DELETE", url, nil)
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
 	req.Header.Set("accept", "*/*")
 	req.Close = false
 
@@ -37,8 +38,9 @@ func delete(http_transport *http.Transport, cookie *http.Cookie, url string) *ht
 }
 
 // get performs GET to the given URL and returns the data response.
+// Deprecated: use getStruct instead.
 func get(http_transport *http.Transport, cookie *http.Cookie, url string) (*http.Response, map[string]interface{}) {
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Set("accept", "*/*")
 	req.Close = false
 	req.AddCookie(cookie)
@@ -53,9 +55,29 @@ func get(http_transport *http.Transport, cookie *http.Cookie, url string) (*http
 	return res, body
 }
 
+// getStruct performs GET to the given URL and returns the response as struct.
+func getStruct[T any](http_transport *http.Transport, cookie *http.Cookie, url string) (T, error) {
+	var result T
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	req.Header.Set("accept", "*/*")
+	req.Close = false
+	req.AddCookie(cookie)
+	res, err := http_transport.RoundTrip(req)
+	if err != nil {
+		return result, err
+	}
+	if res.StatusCode == http.StatusOK {
+		err = json.NewDecoder(res.Body).Decode(&result)
+	} else {
+		err = errors.New(res.Status)
+	}
+
+	return result, err
+}
+
 // post performs POST to the given URL and returns the response.
 func post(http_transport *http.Transport, cookie *http.Cookie, url string, json_body *bytes.Buffer) *http.Response {
-	req, _ := http.NewRequest("POST", url, json_body)
+	req, _ := http.NewRequest(http.MethodPost, url, json_body)
 	req.Header.Set("accept", "*/*")
 	req.Close = false
 
@@ -63,8 +85,7 @@ func post(http_transport *http.Transport, cookie *http.Cookie, url string, json_
 	res, err := http_transport.RoundTrip(req)
 	//Handle Error
 	if err != nil {
-		log.Fatalf("An Error Occured %v %v", err, res.Status)
-		//os.Exit(1)
+		log.Printf("An Error Occured %s %s\n", err, res.Status)
 	}
 
 	return res
