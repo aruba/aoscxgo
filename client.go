@@ -56,8 +56,11 @@ func login(http_transport *http.Transport, ip string, rest_version string, usern
 	req.Close = false
 
 	res, err := http_transport.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
 	if res.StatusCode != http.StatusOK {
-		log.Printf("Got error while connecting to switch %s Error %s\n", res.Status, err)
+		err = fmt.Errorf("Got error while connecting to switch %s Error %s\n", res.Status, err)
 		return nil, err
 	}
 	cookie := res.Cookies()[0]

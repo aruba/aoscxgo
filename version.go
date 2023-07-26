@@ -2,7 +2,7 @@ package aoscxgo
 
 import "bitbucket.org/HelgeOlav/utils/version"
 
-const Version = "0.0.1"
+const Version = "0.0.2"
 
 func init() {
 	version.AddModule(version.ModuleVersion{
