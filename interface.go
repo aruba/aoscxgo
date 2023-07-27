@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"net/url"
 	"regexp"
 )
@@ -81,7 +82,7 @@ func (i *Interface) Create(c *Client) error {
 
 	res := post(c.Transport, c.Cookie, url, json_body)
 
-	if res.Status != "201 Created" {
+	if res.StatusCode != http.StatusCreated {
 		return &RequestError{
 			StatusCode: res.Status,
 			Err:        errors.New("Create Error"),
@@ -126,7 +127,7 @@ func (i *Interface) Update(c *Client) error {
 
 	res := patch(c.Transport, c.Cookie, url, json_body)
 
-	if res.Status != "204 No Content" {
+	if res.StatusCode != http.StatusNoContent {
 		return &RequestError{
 			StatusCode: res.Status,
 			Err:        errors.New("Update Error"),
@@ -173,7 +174,7 @@ func (i *Interface) Get(c *Client) error {
 
 	res, body := get(c.Transport, c.Cookie, url)
 
-	if res.Status != "200 OK" {
+	if res.StatusCode != http.StatusOK {
 		i.materialized = false
 		return &RequestError{
 			StatusCode: res.Status,

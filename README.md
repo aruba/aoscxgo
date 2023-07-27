@@ -3,6 +3,8 @@ aoscxgo
 
 aoscxgo is a golang package that allows users to connect to and configure AOS-CX switches using REST API. The minimum supported firmware version is 10.09.
 
+This package is forked from [Arubas own aoscxgo](https://github.com/aruba/aoscxgo) with some improvements.
+
 Using aoscxgo
 ===========
 
@@ -37,7 +39,9 @@ func main() {
 
 ```
 
-This will login to the switch and create a cookie to use for authentication in further calls. This cookie is stored within the aoscxgo.Client object that will be passed into configuration modules like so:
+This will login to the switch and create a cookie to use for authentication in further calls. This cookie is stored within the aoscxgo.
+
+### Work with VLAN's
 
 ```go
 	vlan100 := aoscxgo.Vlan{
@@ -59,10 +63,11 @@ This will login to the switch and create a cookie to use for authentication in f
 	log.Printf("VLAN Create Success")
 ```
 
-Each API resource will have the following functions (exceptions may vary):
+### Get some switch information
 
-  * `Create()`
-  * `Update()`
-  * `Get()`
-  * `GetStatus()`
-  * `Delete()`
+```go
+    result, err := sw.GetChassis(1)
+    if err == nil {
+        log.Printf("Model %s, serial %s\n", result.ProductInfo.ProductName, result.ProductInfo.SerialNumber)
+    }
+```
