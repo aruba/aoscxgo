@@ -17,17 +17,17 @@ type RequestError struct {
 
 // A custom error string
 func (r *RequestError) Error() string {
-	return fmt.Sprintf("status %d: err %v", r.StatusCode, r.Err)
+	return fmt.Sprintf("Status : %v\nError %v", r.StatusCode, r.Err)
 }
 
 // delete performs DELETE to the given URL and returns the response.
-func delete(http_transport *http.Transport, cookie *http.Cookie, url string) *http.Response {
+func delete(client *Client, url string) *http.Response {
 	req, _ := http.NewRequest("DELETE", url, nil)
 	req.Header.Set("accept", "*/*")
 	req.Close = false
 
-	req.AddCookie(cookie)
-	res, err := http_transport.RoundTrip(req)
+	req.AddCookie(client.Cookie)
+	res, err := client.Transport.RoundTrip(req)
 	//Handle Error
 	if err != nil {
 		log.Fatalf("An Error Occured %v %v", err, res.Status)
@@ -37,12 +37,14 @@ func delete(http_transport *http.Transport, cookie *http.Cookie, url string) *ht
 }
 
 // get performs GET to the given URL and returns the data response.
-func get(http_transport *http.Transport, cookie *http.Cookie, url string) (*http.Response, map[string]interface{}) {
+func get(client *Client, url string) (*http.Response, map[string]interface{}) {
 	req, _ := http.NewRequest("GET", url, nil)
+
 	req.Header.Set("accept", "*/*")
+	req.Header.Set("x-csrf-token", client.Csrf)
 	req.Close = false
-	req.AddCookie(cookie)
-	res, err := http_transport.RoundTrip(req)
+	req.AddCookie(client.Cookie)
+	res, err := client.Transport.RoundTrip(req)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -53,48 +55,65 @@ func get(http_transport *http.Transport, cookie *http.Cookie, url string) (*http
 	return res, body
 }
 
-// post performs POST to the given URL and returns the response.
-func post(http_transport *http.Transport, cookie *http.Cookie, url string, json_body *bytes.Buffer) *http.Response {
+// get performs GET to the given URL and returns the data response.
+func get_accept_text(client *Client, url string) (*http.Response, error) {
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Accept", "text/plain")
+	// req.Header.Set("Content-Type", "text/plain")
+	req.Header.Set("x-csrf-token", client.Csrf)
+	req.Close = false
+	req.AddCookie(client.Cookie)
+	res, err := client.Transport.RoundTrip(req)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return res, err
+}
+
+// get performs GET to the given URL and returns the data response.
+func post(client *Client, url string, json_body *bytes.Buffer) *http.Response {
 	req, _ := http.NewRequest("POST", url, json_body)
-	req.Header.Set("accept", "*/*")
+	req.Header.Set("Content-Type", "text/plain")
+	req.Header.Set("x-csrf-token", client.Csrf)
 	req.Close = false
 
-	req.AddCookie(cookie)
-	res, err := http_transport.RoundTrip(req)
+	req.AddCookie(client.Cookie)
+	res, err := client.Transport.RoundTrip(req)
 	//Handle Error
 	if err != nil {
 		log.Fatalf("An Error Occured %v %v", err, res.Status)
-		//os.Exit(1)
 	}
 
 	return res
 }
 
 // put performs PUT to the given URL and returns the response.
-func put(http_transport *http.Transport, cookie *http.Cookie, url string, json_body *bytes.Buffer) *http.Response {
+func put(client *Client, url string, json_body *bytes.Buffer) *http.Response {
 	req, _ := http.NewRequest("PUT", url, json_body)
 	req.Header.Set("accept", "*/*")
+	req.Header.Set("x-csrf-token", client.Csrf)
 	req.Close = false
 
-	req.AddCookie(cookie)
-	res, err := http_transport.RoundTrip(req)
+	req.AddCookie(client.Cookie)
+	res, err := client.Transport.RoundTrip(req)
 	//Handle Error
 	if err != nil {
 		log.Fatalf("An Error Occured %v %v", err, res.Status)
-		//os.Exit(1)
 	}
 
 	return res
 }
 
 // patch performs PATCH to the given URL and returns the response.
-func patch(http_transport *http.Transport, cookie *http.Cookie, url string, json_body *bytes.Buffer) *http.Response {
+func patch(client *Client, url string, json_body *bytes.Buffer) *http.Response {
 	req, _ := http.NewRequest("PATCH", url, json_body)
 	req.Header.Set("accept", "*/*")
+	req.Header.Set("x-csrf-token", client.Csrf)
 	req.Close = false
 
-	req.AddCookie(cookie)
-	res, err := http_transport.RoundTrip(req)
+	req.AddCookie(client.Cookie)
+	res, err := client.Transport.RoundTrip(req)
 	//Handle Error
 	if err != nil {
 		log.Fatalf("An Error Occured %v %v", err, res.Status)

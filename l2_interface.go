@@ -156,7 +156,7 @@ func (i *L2Interface) Create(c *Client) error {
 
 	json_body := bytes.NewBuffer(patchBody)
 
-	res := patch(c.Transport, c.Cookie, url, json_body)
+	res := patch(c, url, json_body)
 
 	if res.Status != "204 No Content" {
 		return &RequestError{
@@ -191,7 +191,7 @@ func (i *L2Interface) Update(c *Client, use_put bool) error {
 	if i.Interface.Name == "" {
 		return &RequestError{
 			StatusCode: "Missing Interface unable to configure L2Interface",
-			Err:        errors.New("Create Error"),
+			Err:        errors.New("Update Error"),
 		}
 	}
 
@@ -220,7 +220,7 @@ func (i *L2Interface) Update(c *Client, use_put bool) error {
 			err_str := "Vlan Not found unable to configure L2Interface Stats " + err.(*RequestError).StatusCode + " | " + strconv.FormatBool(tmp_vlan.materialized)
 			return &RequestError{
 				StatusCode: err_str,
-				Err:        errors.New("Create Error"),
+				Err:        errors.New("Update Error"),
 			}
 		}
 		updateMap["vlan_tag"] = map[string]interface{}{strconv.Itoa(i.VlanTag): tmp_vlan.GetURI()}
@@ -247,7 +247,7 @@ func (i *L2Interface) Update(c *Client, use_put bool) error {
 				err_str := "Vlan Not found unable to configure L2Interface Stats " + err.(*RequestError).StatusCode + " | " + strconv.Itoa(i.VlanTag)
 				return &RequestError{
 					StatusCode: err_str,
-					Err:        errors.New("Create Error"),
+					Err:        errors.New("Update Error"),
 				}
 			}
 			updateMap["vlan_tag"] = map[string]interface{}{
@@ -277,7 +277,7 @@ func (i *L2Interface) Update(c *Client, use_put bool) error {
 		status_str := "Invalid Required Value: VlanMode - valid options are 'access' or 'trunk' received: " + i.VlanMode
 		return &RequestError{
 			StatusCode: status_str,
-			Err:        errors.New("Create Error"),
+			Err:        errors.New("Update Error"),
 		}
 	}
 
@@ -299,7 +299,7 @@ func (i *L2Interface) Update(c *Client, use_put bool) error {
 	json_body := bytes.NewBuffer(updateBody)
 
 	if use_put {
-		res := put(c.Transport, c.Cookie, url, json_body)
+		res := put(c, url, json_body)
 		if res.Status != "200 OK" {
 			status_str := string(updateBody) + "PUT status code = " + res.Status
 			return &RequestError{
@@ -310,7 +310,7 @@ func (i *L2Interface) Update(c *Client, use_put bool) error {
 		}
 
 	} else {
-		res := patch(c.Transport, c.Cookie, url, json_body)
+		res := patch(c, url, json_body)
 		if res.Status != "204 No Content" {
 			status_str := string(updateBody) + "PATCH status code = " + res.Status
 			return &RequestError{
@@ -331,8 +331,8 @@ func (i *L2Interface) Delete(c *Client) error {
 	base_uri := "system/interfaces"
 	if i.Interface.Name == "" {
 		return &RequestError{
-			StatusCode: "Missing Interface unable to configure L2Interface",
-			Err:        errors.New("Create Error"),
+			StatusCode: "Missing Interface unable to delete L2Interface",
+			Err:        errors.New("Delete Error"),
 		}
 	}
 	int_str := url.PathEscape(i.Interface.Name)
@@ -347,7 +347,7 @@ func (i *L2Interface) Delete(c *Client) error {
 
 	//need logic for handling interfaces between platforms
 
-	res := put(c.Transport, c.Cookie, url, json_body)
+	res := put(c, url, json_body)
 
 	if res.Status != "204 No Content" && res.Status != "200 OK" {
 		return &RequestError{
@@ -364,21 +364,21 @@ func (i *L2Interface) Get(c *Client) error {
 	base_uri := "system/interfaces"
 	if i.Interface.Name == "" {
 		return &RequestError{
-			StatusCode: "Missing Interface unable to configure L2Interface",
-			Err:        errors.New("Create Error"),
+			StatusCode: "Missing Interface unable to retrieve L2Interface",
+			Err:        errors.New("Get Error"),
 		}
 	}
 	int_str := url.PathEscape(i.Interface.Name)
 
 	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + int_str + "?selector=writable"
 
-	res, body := get(c.Transport, c.Cookie, url)
+	res, body := get(c, url)
 
 	if res.Status != "200 OK" {
 		i.materialized = false
 		return &RequestError{
 			StatusCode: res.Status,
-			Err:        errors.New("Retrieval Error"),
+			Err:        errors.New("Get Error"),
 		}
 	}
 

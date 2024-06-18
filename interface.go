@@ -16,6 +16,7 @@ type Interface struct {
 	AdminState       string                 `json:"admin"`
 	InterfaceDetails map[string]interface{} `json:"details"`
 	materialized     bool                   `json:"materialized"`
+	uri              string                 `json:"uri"`
 }
 
 // checkName validates if interface Name is valid or not
@@ -53,7 +54,11 @@ func (i *Interface) checkValues() error {
 // Create performs POST to create Interface configuration on the given Client object.
 func (i *Interface) Create(c *Client) error {
 	base_uri := "system/interfaces"
-	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri
+	url_str := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri
+
+	int_str := url.PathEscape(i.Name)
+
+	i.uri = "/rest/" + c.Version + "/" + base_uri + "/" + int_str
 
 	err := i.checkValues()
 	if err != nil {
@@ -79,7 +84,7 @@ func (i *Interface) Create(c *Client) error {
 
 	json_body := bytes.NewBuffer(postBody)
 
-	res := post(c.Transport, c.Cookie, url, json_body)
+	res := post(c, url_str, json_body)
 
 	if res.Status != "201 Created" {
 		return &RequestError{
@@ -124,7 +129,7 @@ func (i *Interface) Update(c *Client) error {
 
 	json_body := bytes.NewBuffer(patchBody)
 
-	res := patch(c.Transport, c.Cookie, url, json_body)
+	res := patch(c, url, json_body)
 
 	if res.Status != "204 No Content" {
 		return &RequestError{
@@ -148,11 +153,11 @@ func (i *Interface) Delete(c *Client) error {
 	json_body := bytes.NewBuffer(putBody)
 
 	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + int_str
-	//res := delete(c.Transport, c.Cookie, url)
+	//res := delete(c,  url)
 
 	//need logic for handling interfaces between platforms
 
-	res := put(c.Transport, c.Cookie, url, json_body)
+	res := put(c, url, json_body)
 
 	if res.Status != "204 No Content" && res.Status != "200 OK" {
 		return &RequestError{
@@ -171,7 +176,7 @@ func (i *Interface) Get(c *Client) error {
 
 	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + int_str + ""
 
-	res, body := get(c.Transport, c.Cookie, url)
+	res, body := get(c, url)
 
 	if res.Status != "200 OK" {
 		i.materialized = false

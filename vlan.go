@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -50,7 +51,7 @@ func (v *Vlan) Create(c *Client) error {
 
 	json_body := bytes.NewBuffer(postBody)
 
-	res := post(c.Transport, c.Cookie, url, json_body)
+	res := post(c, url, json_body)
 
 	if res.Status != "201 Created" {
 		return &RequestError{
@@ -88,7 +89,7 @@ func (v *Vlan) Update(c *Client) error {
 
 	json_body := bytes.NewBuffer(patchBody)
 
-	res := patch(c.Transport, c.Cookie, url, json_body)
+	res := patch(c, url, json_body)
 
 	if res.Status != "204 No Content" {
 		return &RequestError{
@@ -103,10 +104,25 @@ func (v *Vlan) Update(c *Client) error {
 // Delete performs DELETE to remove VLAN configuration from the given Client object.
 func (v *Vlan) Delete(c *Client) error {
 	base_uri := "system/vlans"
+	// Check if Vlan Interface exists, if so then fail
+	vlan_interface_id := fmt.Sprintf("vlan%d", v.VlanId)
+
+	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + vlan_interface_id
+
+	res, _ := get(c, url)
+
+	if res.Status == "200 OK" {
+		err_str := "VlanInterface " + vlan_interface_id + " exists - delete VlanInterface before deleting Vlan " + vlan_interface_id
+		return &RequestError{
+			StatusCode: err_str,
+			Err:        errors.New("Delete Error"),
+		}
+	}
+
 	vlan_str := strconv.Itoa(v.VlanId)
 
-	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + vlan_str
-	res := delete(c.Transport, c.Cookie, url)
+	url = "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + vlan_str
+	res = delete(c, url)
 
 	if res.Status != "204 No Content" {
 		return &RequestError{
@@ -124,14 +140,14 @@ func (v *Vlan) Get(c *Client) error {
 	vlan_str := strconv.Itoa(v.VlanId)
 	v.uri = "/rest/" + c.Version + "/" + base_uri + "/" + vlan_str
 
-	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + vlan_str + ""
+	url := "https://" + c.Hostname + "/rest/" + c.Version + "/" + base_uri + "/" + vlan_str
 
-	res, body := get(c.Transport, c.Cookie, url)
+	res, body := get(c, url)
 
 	if res.Status != "200 OK" {
 		v.materialized = false
 		return &RequestError{
-			StatusCode: res.Status,
+			StatusCode: res.Status + url,
 			Err:        errors.New("Retrieval Error"),
 		}
 	}
